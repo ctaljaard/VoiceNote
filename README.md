@@ -1,4 +1,3 @@
-```markdown
 # VoiceNote - FastAPI WebSocket Chat with Audio Support
 
 VoiceNote is a simple chat application built with FastAPI that supports both text and audio messages. It uses WebSockets for real-time communication and provides a seamless way to exchange voice notes in a chat environment.
@@ -87,6 +86,3 @@ VoiceNote/
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
-```
-
-This version should now be properly formatted without issues, with all the instructions and details in a single markdown file.
