@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Logs and debug files
+*.log
+*.out
+*.err
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# Python egg files
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Static and uploaded files
+static/audio_*.wav
+
+# ngrok configuration
+ngrok.log
+ngrok.yml
+
+# Environment variables
+.env
