@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{name}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: scroll;
+            border-bottom: 1px solid #ddd;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+        }
+        #messageInputArea {
+            padding: 10px;
+            background-color: #fff;
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+        #messageInputArea input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #messageInputArea button {
+            margin-left: 10px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #messageInputArea button:hover {
+            background-color: #0056b3;
+        }
+        #recordBtn {
+            margin-left: 10px;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #recordBtn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h2>Chatting as {name}</h2>
+    <div id="messages"></div>
+
+    <div id="messageInputArea">
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+        <button id="recordBtn" onclick="toggleRecording()">Start Recording</button>
+    </div>
+
+    <script>
+        const rawName = window.location.pathname.substring(1);
+        const ws = new WebSocket(`wss://197d-41-164-31-186.ngrok-free.app/ws/${rawName}`);
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        ws.onopen = () => {
+            document.querySelector("h2").textContent = `Chatting as ${rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase()}`;
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const messageDiv = document.createElement("div");
+
+            if (data.type === "text") {
+                messageDiv.classList.add("message");
+                messageDiv.textContent = `${data.name}: ${data.message}`;
+            } else if (data.type === "audio") {
+                messageDiv.classList.add("message");
+                messageDiv.textContent = `${data.name}: `;
+                const audioElement = document.createElement("audio");
+                audioElement.controls = true;
+                audioElement.src = data.message;
+                messageDiv.appendChild(audioElement);
+            }
+
+            document.getElementById("messages").appendChild(messageDiv);
+            document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+        };
+
+        function sendMessage() {
+            const messageInput = document.getElementById("messageInput");
+            ws.send(JSON.stringify({ message: messageInput.value, type: "text" }));
+            messageInput.value = "";
+        }
+
+        function toggleRecording() {
+            const recordBtn = document.getElementById("recordBtn");
+
+            if (!isRecording) {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+                        const formData = new FormData();
+                        formData.append("file", audioBlob, "audio.wav");
+
+                        fetch("/upload_audio/", { method: "POST", body: formData })
+                            .then(response => response.json())
+                            .then(data => {
+                                ws.send(JSON.stringify({ message: data.audio_url, type: "audio" }));
+                            });
+                    };
+
+                    mediaRecorder.start();
+                    recordBtn.textContent = "Stop";
+                    isRecording = true;
+                }).catch(err => {
+                    console.error("Error accessing media devices:", err);
+                });
+            } else {
+                mediaRecorder.stop();
+                recordBtn.textContent = "Start Recording";
+                isRecording = false;
+            }
+        }
+    </script>
+</body>
+</html>
