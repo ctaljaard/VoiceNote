@@ -75,7 +75,8 @@
 
     <script>
         const rawName = window.location.pathname.substring(1);
-        const ws = new WebSocket(`wss://197d-41-164-31-186.ngrok-free.app/ws/${rawName}`);
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${protocol}//${window.location.host}/ws/${rawName}`);
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
